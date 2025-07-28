@@ -1,0 +1,182 @@
+:root {
+    --background: #181a1f;
+    --foreground: #fdfdfd;
+
+    --thumb-size: 256px;
+    --thumb-gap: 16px;
+
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: Inter, sans-serif;
+    font-feature-settings: 'liga' 1, 'calt' 1;
+}
+
+@supports (font-variation-settings: normal) {
+    :root {
+        font-family: InterVariable, sans-serif;
+    }
+}
+
+@media screen and (max-width: 590px) {
+    :root {
+        --thumb-size: 512px;
+        --thumb-gap: 10px;
+    }
+}
+
+body {
+    min-height: 100vh;
+    width: calc(var(--num-cols) * (var(--thumb-size) + var(--thumb-gap)) - var(--thumb-gap));
+    margin: 0 auto;
+    display: -webkit-box;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    flex-direction: column;
+}
+
+@media screen and (max-width: 590px) {
+    body {
+        width: 95%;
+    }
+}
+
+main {
+    -webkit-box-flex: 1;
+    -moz-box-flex: 1;
+    -webkit-flex: 1;
+    -ms-flex: 1;
+    flex: 1;
+}
+
+footer {
+    font-size: 10pt;
+    text-align: center;
+
+}
+
+footer a, footer a:visited {
+    text-decoration: underline !important;
+}
+
+img.lightbox {
+    width: 100%;
+    max-height: 80vh;
+    object-fit: contain;
+    -o-object-fit: contain;
+}
+
+a, a:visited {
+    color: var(--foreground);
+    text-decoration: none;
+}
+
+a:hover, a:active, a:focus {
+    filter: brightness(75%);
+    text-decoration: none;
+}
+
+nav {
+    height: 2em;
+    display: -webkit-box;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: baseline;
+
+}
+
+nav .prev, nav .next {
+    -webkit-box-flex: 1;
+    -moz-box-flex: 1;
+    -webkit-flex: 1;
+    -ms-flex: 1;
+    flex: 1;
+}
+
+nav .next {
+    text-align: right;
+}
+
+.thumbs {
+    display: -webkit-box;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    justify-items: center;
+    align-content: center;
+    align-items: center;
+    gap: var(--thumb-gap);
+}
+
+.thumb {
+    width: var(--thumb-size);
+}
+
+.thumb img {
+    width: var(--thumb-size);
+    height: var(--thumb-size);
+    object-fit: cover;
+    -o-object-fit: cover;
+}
+
+.thumb:hover, .thumb:active, .thumb:focus {
+    filter: brightness(75%);
+}
+
+p.title {
+    margin-top: 0.5em;
+}
+
+@media screen and (max-width: 590px) {
+    .thumbs {
+        display: block;
+    }
+
+    .thumb {
+        max-width: 100%;
+    }
+
+    .thumb img {
+        width: 90vw;
+        height: 90vw;
+    }
+}
+
+/* surely there's a better way... */
+@media screen and (max-width: 590px) {
+    :root {
+        --num-cols: 1;
+    }
+}
+@media screen and (min-width: 591px) and (max-width: 888px) {
+    :root {
+        --num-cols: 2;
+    }
+}
+@media screen and (min-width: 889px) and (max-width: 1191px) {
+    :root {
+        --num-cols: 3;
+    }
+}
+@media screen and (min-width: 1192px) and (max-width: 1493px) {
+    :root {
+        --num-cols: 4;
+    }
+}
+@media screen and (min-width: 1494px) and (max-width: 1795px) {
+    :root {
+        --num-cols: 5;
+    }
+}
+@media screen and (min-width: 1796px) {
+    :root {
+        --num-cols: 6;
+    }
+}

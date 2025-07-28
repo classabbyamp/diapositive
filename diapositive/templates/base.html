@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="preconnect" href="https://rsms.me/">
+        <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+        <link rel="stylesheet" href="{{ site.base_url }}/static/styles.css">
+        <link rel="icon" href="{{ site.base_url }}/static/favicon.ico">
+        <link rel="apple-touch-icon" sizes="180x180" href="{{ site.base_url }}/static/apple-touch-icon.png">
+        <link rel="icon" type="image/png" sizes="32x32" href="{{ site.base_url }}/static/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="{{ site.base_url }}/static/favicon-16x16.png">
+        <link rel="manifest" href="{{ site.base_url }}/static/site.webmanifest">
+        {% block head %}{% endblock %}
+        <title>{% block title %}{{ site.title }}{% endblock %}</title>
+    </head>
+    <body>
+        <header>
+            <h1><a class="header" href="{{ site.base_url }}">{{ site.title }}</a></h1>
+            {% block header %}{% endblock %}
+        </header>
+        <main>
+            {% block content %}{% endblock %}
+        </main>
+        <footer>
+            <p>
+                created with <a href="https://github.com/classabbyamp/diapositive">diapositive</a><br>
+                all photos copyright {{ site.copyright.years }} {{ site.copyright.artist }}, {{ site.copyright.licence }}
+            </p>
+        </footer>
+    </body>
+</html>

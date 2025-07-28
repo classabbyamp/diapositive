@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="thumbs">
+    {% for album in site.albums %}
+    <div class="thumb">
+        <a href="{{ album | album_url }}">
+            <img src="{{ album.cover | asset_url("thm") }}" alt="{{ album.cover.metadata.alt }}">
+            <p class="title">{{ album.title }}</p>
+        </a>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

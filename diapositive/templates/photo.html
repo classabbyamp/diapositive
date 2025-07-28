@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}photo in {{ album.title }} - {{ site.title }}{% endblock %}
+
+{% set meta = photo.metadata %}
+
+{% block header %}
+<nav>
+    <div class="prev">
+        {% if index > 1 %}
+        <a href="{{ (index - 1) | photo_url }}"><span aria-hidden="true">&larr; </span>previous</a>
+        {% endif %}
+    </div>
+    <div>
+        <a href="{{ album | album_url }}"><span aria-hidden="true">&uarr; </span>album</a>
+    </div>
+    <div class="next">
+        {% if index < (album | length) %}
+        <a href="{{ (index + 1) | photo_url }}">next<span aria-hidden="true"> &rarr;</span></a>
+        {% endif %}
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<img class="lightbox" src="{{ photo | asset_url }}" alt="{{ meta.desc }}">
+<div class="caption">
+    <p>{{ meta.desc }}</p>
+    <p>{{ meta.date.strftime('%d %B %Y') }}</p>
+    <p>
+        {% if meta.make or meta.model %}
+        {{ meta.make | default("") }} {{ meta.model | default("") }}<br>
+        {% endif %}
+        {% if meta.lens_make or meta.lens_model %}
+        {{ meta.lens_make | default("") }} {{ meta.lens_model | default("") }}
+            {% if meta.focal_length %}
+            ({{ meta.focal_length }}mm)
+            {% endif %}
+        <br>
+        {% elif meta.focal_length %}
+        {{ meta.focal_length }}mm<br>
+        {% endif %}
+        {% if meta.exposure and meta.aperture %}
+        {{ meta.exposure | exposure }}s at <i>f</i>/{{ meta.aperture | fnumber }}<br>
+        {% elif meta.exposure %}
+        {{ meta.exposure | exposure }}s<br>
+        {% elif meta.aperture %}
+        <i>f</i>/{{ meta.aperture | fnumber }}<br>
+        {% endif %}
+        {% if meta.film and meta.iso %}
+        {{ meta.film }} ({{ meta.iso }} ISO)
+        {% elif meta.film %}
+        {{ meta.film }}
+        {% elif meta.iso %}
+        {{ meta.iso }} ISO
+        {% endif %}
+    </p>
+</div>
+{% endblock %}
