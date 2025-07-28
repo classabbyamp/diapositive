@@ -1,0 +1,30 @@
+[project]
+name = "diapositive"
+version = "0.1.0"
+description = "simple photo gallery generator"
+readme = "README.md"
+authors = [
+    { name = "classabbyamp", email = "dev@placeviolette.net" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "jinja2>=3.1.4",
+    "pillow>=11.0.0",
+    "python-hcl2>=6.1.0",
+]
+
+[project.scripts]
+diapo = "diapositive.__main__:main"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["diapositive"]
+
+[tool.setuptools.package-data]
+diapositive = ["templates/*.html", "static/*"]
+
+[tool.pyright]
+reportPrivateImportUsage = "none"
