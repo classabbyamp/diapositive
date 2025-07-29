@@ -136,8 +136,6 @@ class Photo:
             exif[tags.Base.Copyright] = f"{copyright.artist}, {copyright.licence}"
         if self.metadata.desc is not None:
             exif[tags.Base.ImageDescription] = self.metadata.desc
-        if self.metadata.date is not None:
-            exif[tags.Base.DateTimeOriginal] = self.metadata.date.strftime("%Y:%m:%d %H:%M:%S")
 
         im.save(photo_path, optimize=True, exif=exif)
 
