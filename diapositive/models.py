@@ -177,6 +177,10 @@ class Album(Node):
                 if (mime := guess_file_type(itm)[0]) is not None and mime.startswith("image/"):
                     photos.append(Photo.from_path(itm))
 
+        if not (0 < cover_idx <= len(photos)):
+            logger.warning(f"cover index {cover_idx} for album '{id}' outside range (photos in album: {len(photos)})")
+            cover_idx = 1
+
         return cls(
             id=id,
             title=title,
