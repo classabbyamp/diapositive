@@ -8,8 +8,8 @@ from datetime import datetime
 from importlib.resources import as_file, files
 from numbers import Rational
 from pathlib import Path
-
 from pprint import pprint
+from typing import Any
 
 import hcl2
 from jinja2 import Environment, PackageLoader, Template, select_autoescape
@@ -41,6 +41,35 @@ class Copyright:
             years=d.get("years", str(datetime.now().year)),
             licence=d.get("licence", "all rights reserved"),
         )
+
+
+@dataclass
+class AlbumSort:
+    by: str
+    order: str
+
+    @classmethod
+    def from_config(cls, d: dict[str, str]):
+        if (by := d.get("by", "alpha")) not in ["alpha", "time"]:
+            raise ValueError(f"invalid value for sort.by: {by}")
+        if (order := d.get("order", "desc")) not in ["asc", "desc"]:
+            raise ValueError(f"invalid value for sort.order: {order}")
+        return cls(
+            by=by,
+            order=order,
+        )
+
+    def sort(self, v: Album) -> Any:
+        match self.by:
+            case "alpha":
+                return v.id
+            case "time":
+                return v.date
+            case _:
+                raise ValueError(f"invalid value for sort.by: {self.by}")
+
+    def reversed(self) -> bool:
+        return self.order == "desc"
 
 
 @dataclass
@@ -151,6 +180,7 @@ class Photo:
 class Album(Node):
     id: str
     title: str
+    date: datetime
     src: Path
     cover: Photo
     photos: list[Photo]
@@ -159,6 +189,7 @@ class Album(Node):
     def from_path(cls, path: Path):
         id = slugify(path.name)
         title = id
+        date = datetime.fromtimestamp(path.stat().st_mtime)
         cover_idx = 1
 
         metafile = path / "album.hcl"
@@ -167,6 +198,12 @@ class Album(Node):
                 meta = hcl2.load(f)
                 pprint(meta)
             title = meta.get("title", title)
+            meta_date = meta.get("date")
+            if meta_date:
+                try:
+                    date = datetime.fromisoformat(meta_date)
+                except ValueError:
+                    logger.warning(f"invalid date {meta_date!r} for album {id!r}, falling back to {date}")
             cover_idx = meta.get("cover", cover_idx)
 
         photos = []
@@ -182,6 +219,7 @@ class Album(Node):
         return cls(
             id=id,
             title=title,
+            date=date,
             src=path,
             cover=photos[cover_idx-1],
             photos=photos,
@@ -202,6 +240,7 @@ class Site:
     title: str
     thumb_size: int
     image_size: int
+    sort: AlbumSort
     copyright: Copyright
     albums: DLList[Album]
 
@@ -216,20 +255,24 @@ class Site:
         else:
             raise ValueError("missing copyright info")
 
+        sort_cfg = AlbumSort.from_config(cfg.get("sort", {}))
+
         return cls(
             base_url=cfg["base_url"],
             title=cfg.get("title", "diapositive"),
             thumb_size=cfg.get("thumb_size", 512),
             image_size=cfg.get("image_size", 2500),
+            sort=sort_cfg,
             copyright=copyright,
             albums=DLList(),
         )
 
     def read_albums(self, path: Path):
         albums = []
-        for itm in sorted(path.glob("*")):
+        for itm in path.glob("*"):
             if itm.is_dir() and not itm.name == "_site":
                 albums.append(Album.from_path(itm))
+        albums = sorted(albums, key=self.sort.sort, reverse=self.sort.reversed())
         self.albums = DLList(albums)
 
     def write(self, outdir: Path):

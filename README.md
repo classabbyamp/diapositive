@@ -21,6 +21,11 @@ image_size = 2000
 # max thumbnail size
 thumb_size = 512
 
+sort = {
+  by = "alpha"  # or "time"
+  order = "desc"  # or "asc"
+}
+
 copyright = {
   artist = "your name here"
   years = "2000-2025"
@@ -35,4 +40,6 @@ album directories can have their own configuration:
 title = "something"
 # cover photo: 1-indexed, overrides default, which is index 1
 cover = 2
+# date of the album
+date = "1970-01-01"
 ```
