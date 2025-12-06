@@ -1,6 +1,6 @@
 :root {
-    --background: #181a1f;
-    --foreground: #fdfdfd;
+    --background: {{ site.theme.background }};
+    --foreground: {{ site.theme.foreground }};
 
     --thumb-size: 256px;
     --thumb-gap: 16px;

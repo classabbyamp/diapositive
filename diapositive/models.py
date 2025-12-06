@@ -78,6 +78,23 @@ class AlbumSort:
 
 
 @dataclass
+class Theme:
+    background: str
+    foreground: str
+
+    @classmethod
+    def from_config(cls, d: dict[str, str]):
+        if (by := d.get("by", "alpha")) not in ["alpha", "time"]:
+            raise ValueError(f"invalid value for sort.by: {by}")
+        if (order := d.get("order", "desc")) not in ["asc", "desc"]:
+            raise ValueError(f"invalid value for sort.order: {order}")
+        return cls(
+            background=d.get("background", "#181a1f"),
+            foreground=d.get("foreground", "#fdfdfd"),
+        )
+
+
+@dataclass
 class Metadata:
     make: str | None
     model: str | None
@@ -252,6 +269,7 @@ class Site:
     feed: bool
     thumb_size: int
     image_size: int
+    theme: Theme
     sort: AlbumSort
     copyright: Copyright
     generated: datetime
@@ -272,6 +290,7 @@ class Site:
         else:
             raise ValueError("missing copyright info")
 
+        theme_cfg = Theme.from_config(cfg.get("theme", {}))
         sort_cfg = AlbumSort.from_config(cfg.get("sort", {}))
 
         return cls(
@@ -280,6 +299,7 @@ class Site:
             feed=cfg.get("feed", True),
             thumb_size=cfg.get("thumb_size", 512),
             image_size=cfg.get("image_size", 2500),
+            theme=theme_cfg,
             sort=sort_cfg,
             copyright=copyright,
             generated=datetime.now(UTC),
@@ -309,6 +329,9 @@ class Site:
 
         with as_file(files("diapositive.static")) as static:
             shutil.copytree(static, outdir / "static")
+
+        env.get_template("styles.css").stream().dump(str(outdir/ "styles.css"))
+
         env.get_template("index.html").stream().dump(str(outdir / "index.html"))
 
         (outdir / "album").mkdir(parents=True)
