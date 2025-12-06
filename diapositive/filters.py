@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from numbers import Rational
 from typing import TYPE_CHECKING
 
@@ -13,6 +14,7 @@ __all__ = [
     "album_url",
     "photo_url",
     "asset_url",
+    "isodate",
 ]
 
 
@@ -56,3 +58,9 @@ def asset_url(photo: Photo, variant: str | None = None) -> str:
     if variant is not None:
         sfx = variant + "." + sfx
     return f"/photo/{photo.id}.{sfx}"
+
+
+def isodate(d: datetime) -> str:
+    if d.tzinfo is None:
+        d = d.replace(tzinfo=UTC)
+    return d.isoformat()

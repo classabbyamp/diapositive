@@ -4,7 +4,7 @@ import re
 import shutil
 import sys
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from importlib.resources import as_file, files
 from numbers import Rational
 from pathlib import Path
@@ -249,14 +249,16 @@ class Album(Node):
 class Site:
     base_url: str
     title: str
+    feed: bool
     thumb_size: int
     image_size: int
     sort: AlbumSort
     copyright: Copyright
+    generated: datetime
     albums: DLList[Album]
 
     def __repr__(self) -> str:
-        return (f"Site(base_url: {self.base_url}, title: {self.title!r}, "
+        return (f"Site(base_url: {self.base_url}, title: {self.title!r}, feed: {self.feed}, "
                 f"thumb_size: {self.thumb_size}, image_size: {self.image_size}, "
                 f"sort: {self.sort}, copyright: {self.copyright})")
 
@@ -275,10 +277,12 @@ class Site:
         return cls(
             base_url=cfg["base_url"],
             title=cfg.get("title", "diapositive"),
+            feed=cfg.get("feed", True),
             thumb_size=cfg.get("thumb_size", 512),
             image_size=cfg.get("image_size", 2500),
             sort=sort_cfg,
             copyright=copyright,
+            generated=datetime.now(UTC),
             albums=DLList(),
         )
 
@@ -313,6 +317,10 @@ class Site:
         env.get_template("redirect.html").stream(dest="/").dump(str(outdir / "photo/index.html"))
 
         env.get_template("404.html").stream().dump(str(outdir / "404.html"))
+
+        if self.feed:
+            logger.info("generating ATOM feed")
+            env.get_template("feed.xml").stream().dump(str(outdir / "feed.xml"))
 
         for album in self.albums:
             album.write(outdir, env.get_template("album.html"))

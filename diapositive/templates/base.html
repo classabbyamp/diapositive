@@ -12,6 +12,7 @@
         <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
         <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png">
         <link rel="manifest" href="/static/site.webmanifest">
+        {% if site.feed %}<link rel="alternate" type="application/atom+xml" href="/feed.xml">{% endif %}
         {% block head %}{% endblock %}
         <title>{% block title %}{{ site.title }}{% endblock %}</title>
     </head>
@@ -27,6 +28,7 @@
             <p>
                 created with <a href="https://github.com/classabbyamp/diapositive">diapositive</a>
                 <br>all photos copyright {{ site.copyright.years }} {{ site.copyright.artist }}, {{ site.copyright.licence }}
+                {% if site.feed %}<br><a href="/feed.xml">subscribe</a>{% endif %}
             </p>
         </footer>
     </body>

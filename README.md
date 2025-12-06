@@ -15,6 +15,8 @@ the overall config:
 base_url = "https://pics.example.com"
 # the title at the top of every page
 title = "my cool photos"
+# generate an RSS/ATOM feed
+feed = true
 
 # maximum image dimension
 image_size = 2000

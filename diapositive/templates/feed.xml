@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <id>{{ site.base_url }}/</id>
+    <title>{{ site.title }}</title>
+    <link rel="self" href="{{ site.base_url }}/feed.xml" />
+    <link rel="alternate" href="{{ site.base_url }}" />
+    <updated>{{ site.generated | isodate }}</updated>
+    <author>
+        <name>{{ site.copyright.artist }}</name>
+    </author>
+{%- for album in site.albums | sort(attribute="date,id", reverse=True) %}
+    <entry>
+        <id>{{ site.base_url }}{{ album | album_url }}</id>
+        <title>{{ album.title }}</title>
+        <summary>{{ album.photos | length }} photos</summary>
+        <link rel="alternate" href="{{ site.base_url }}{{ album | album_url }}" />
+        <updated>{{ album.date | isodate }}</updated>
+        <author>
+            <name>{{ site.copyright.artist }}</name>
+        </author>
+    </entry>
+{%- endfor %}
+</feed>
