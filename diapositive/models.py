@@ -8,7 +8,6 @@ from datetime import datetime
 from importlib.resources import as_file, files
 from numbers import Rational
 from pathlib import Path
-from pprint import pprint
 from typing import Any
 
 import hcl2
@@ -42,6 +41,9 @@ class Copyright:
             licence=d.get("licence", "all rights reserved"),
         )
 
+    def __repr__(self) -> str:
+        return f"Copyright(artist: {self.artist}, years: {self.years}, licence: {self.licence})"
+
 
 @dataclass
 class AlbumSort:
@@ -70,6 +72,9 @@ class AlbumSort:
 
     def reversed(self) -> bool:
         return self.order == "desc"
+
+    def __repr__(self) -> str:
+        return f"AlbumSort(by: {self.by}, order: {self.order})"
 
 
 @dataclass
@@ -168,7 +173,7 @@ class Photo:
 
         im.save(photo_path, optimize=True, exif=exif)
 
-    def write(self, index: int, album: "Album", outdir: Path, tmpl: Template):
+    def write(self, index: int, album: Album, outdir: Path, tmpl: Template):
         photo_path = outdir / "album" / album.id / str(index) / "index.html"
         logger.debug(f"creating directories for photo page: {photo_path}")
         photo_path.parent.mkdir(parents=True, exist_ok=True)
@@ -192,11 +197,12 @@ class Album(Node):
         date = datetime.fromtimestamp(path.stat().st_mtime)
         cover_idx = 1
 
+        logger.info(f"building album {id!r} from {path}")
+
         metafile = path / "album.hcl"
         if metafile.exists():
             with metafile.open("r") as f:
                 meta = hcl2.load(f)
-                pprint(meta)
             title = meta.get("title", title)
             meta_date = meta.get("date")
             if meta_date:
@@ -205,15 +211,19 @@ class Album(Node):
                 except ValueError:
                     logger.warning(f"invalid date {meta_date!r} for album {id!r}, falling back to {date}")
             cover_idx = meta.get("cover", cover_idx)
+            logger.debug(f"Album(title: {title!r}, date: {date}, cover: {cover_idx})")
 
         photos = []
         for itm in sorted(path.glob("*")):
             if itm.is_file():
                 if (mime := guess_file_type(itm)[0]) is not None and mime.startswith("image/"):
+                    logger.debug(f"added photo {itm} to album {id!r}")
                     photos.append(Photo.from_path(itm))
+                else:
+                    logger.debug(f"skipping file {itm!r} in album {id!r}, not a photo (mime: {mime})")
 
         if not (0 < cover_idx <= len(photos)):
-            logger.warning(f"cover index {cover_idx} for album '{id}' outside range (photos in album: {len(photos)})")
+            logger.warning(f"cover index {cover_idx} for album {id!r} outside range (photos in album: {len(photos)})")
             cover_idx = 1
 
         return cls(
@@ -226,6 +236,7 @@ class Album(Node):
         )
 
     def write(self, outdir: Path, tmpl: Template):
+        logger.info(f"writing album page for album {self.id!r}")
         album_path = outdir / "album" / self.id / "index.html"
         album_path.parent.mkdir(parents=True, exist_ok=True)
         tmpl.stream(album=self).dump(str(album_path))
@@ -244,11 +255,15 @@ class Site:
     copyright: Copyright
     albums: DLList[Album]
 
+    def __repr__(self) -> str:
+        return (f"Site(base_url: {self.base_url}, title: {self.title!r}, "
+                f"thumb_size: {self.thumb_size}, image_size: {self.image_size}, "
+                f"sort: {self.sort}, copyright: {self.copyright})")
+
     @classmethod
     def from_config(cls, path: Path):
         with path.open("r") as f:
             cfg = hcl2.load(f)
-            pprint(cfg)
 
         if "copyright" in cfg:
             copyright = Copyright.from_config(cfg["copyright"])

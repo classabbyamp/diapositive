@@ -33,12 +33,19 @@ def main():
     )
     args = parser.parse_args()
 
-    logging.basicConfig(format="%(levelname)s: %(message)s",
+    logging.addLevelName(logging.DEBUG, "\033[0;35mD\033[0m")
+    logging.addLevelName(logging.INFO, "\033[0;34mI\033[0m")
+    logging.addLevelName(logging.WARNING, "\033[0;33mW\033[0m")
+    logging.addLevelName(logging.ERROR, "\033[0;31mE\033[0m")
+    logging.addLevelName(logging.CRITICAL, "\033[1;31m!\033[0m")
+    logging.basicConfig(format="[%(levelname)s] %(message)s",
                         level=logging.DEBUG if args.debug else (
                             logging.INFO if args.verbose else logging.WARNING
                         ))
     logging.captureWarnings(True)
     logger = logging.getLogger(__name__)
+    pillow_logger = logging.getLogger("PIL")
+    pillow_logger.setLevel(logging.WARNING)
 
     print(NAME)
 
@@ -46,7 +53,13 @@ def main():
     logger.info(f"using config file: {cfg}")
     logger.info(f"using input directory: {args.indir}")
     logger.info(f"using output directory: {args.outdir}")
-    site = Site.from_config(cfg)
-    site.read_albums(args.indir)
-    site.write(args.outdir)
+    try:
+        site = Site.from_config(cfg)
+        if args.debug:
+            logger.debug(site)
+        site.read_albums(args.indir)
+        site.write(args.outdir)
+    except Exception as e:
+        logger.critical(f"fatal {type(e).__name__}: {e}")
+        exit(1)
     logger.info("site built")
