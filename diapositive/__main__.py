@@ -24,6 +24,10 @@ def main():
         help="configuration file (default: <PHOTODIR>/diapositive.toml)",
     )
     parser.add_argument(
+        "-u", "--baseurl", metavar="URL", type=str,
+        default="", help="base URL for serving the site (overrides configuration)",
+    )
+    parser.add_argument(
         "-v", "--verbose", action="store_true",
         help="show more verbose output",
     )
@@ -55,6 +59,9 @@ def main():
     logger.info(f"using output directory: {args.outdir}")
     try:
         site = Site.from_config(cfg)
+        if args.baseurl:
+            logger.debug(f"overriding base_url from command-line: {args.baseurl}")
+            site.base_url = args.baseurl
         if args.debug:
             logger.debug(site)
         site.read_albums(args.indir)

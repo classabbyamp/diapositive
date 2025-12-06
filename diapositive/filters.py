@@ -42,26 +42,17 @@ def fnumber(raw: float | Rational | None) -> str | None:
     return None
 
 
-@pass_context
-def album_url(ctx: Context, item: "Album") -> str:
-    site = ctx.get("site")
-
-    return f"{site.base_url}/album/{item.id}"
+def album_url(item: Album) -> str:
+    return f"/album/{item.id}"
 
 @pass_context
 def photo_url(ctx: Context, idx: int) -> str:
-    site = ctx.get("site")
     album = ctx.get("album")
+    return f"/album/{album.id}/{idx}/"
 
-    return f"{site.base_url}/album/{album.id}/{idx}/"
 
-
-@pass_context
-def asset_url(ctx: Context, photo: "Photo", variant: str | None = None) -> str:
-    site = ctx.get("site")
-
+def asset_url(photo: Photo, variant: str | None = None) -> str:
     sfx = "png"
     if variant is not None:
         sfx = variant + "." + sfx
-
-    return f"{site.base_url}/photo/{photo.id}.{sfx}"
+    return f"/photo/{photo.id}.{sfx}"

@@ -3,10 +3,10 @@
 {% block title %}redirecting... - {{ site.title }}{% endblock %}
 
 {% block head %}
-<meta http-equiv="refresh" content="0; url='{{ site.base_url }}{{ dest }}'">
+<meta http-equiv="refresh" content="0; url='{{ dest }}'">
 {% endblock %}
 
 {% block content %}
 <h2>redirecting...</h2>
-<p>click <a href="{{ site.base_url }}{{ dest }}">here</a> if you are not automatically redirected.</p>
+<p>click <a href="{{ dest }}">here</a> if you are not automatically redirected.</p>
 {% endblock %}
