@@ -1,5 +1,6 @@
 import argparse
 import logging
+import os
 from pathlib import Path
 
 from . import NAME
@@ -28,6 +29,10 @@ def main():
         default="", help="base URL for serving the site (overrides configuration)",
     )
     parser.add_argument(
+        "-j", "--jobs", metavar="N", type=int,
+        default=os.process_cpu_count(), help="number of jobs for parallel processing (default: number of available CPUs)",
+    )
+    parser.add_argument(
         "-v", "--verbose", action="store_true",
         help="show more verbose output",
     )
@@ -54,6 +59,7 @@ def main():
     print(NAME)
 
     cfg = args.config or (args.indir / "diapositive.hcl")
+    logger.info(f"using {args.jobs} jobs")
     logger.info(f"using config file: {cfg}")
     logger.info(f"using input directory: {args.indir}")
     logger.info(f"using output directory: {args.outdir}")
@@ -64,8 +70,8 @@ def main():
             site.base_url = args.baseurl
         if args.debug:
             logger.debug(site)
-        site.read_albums(args.indir)
-        site.write(args.outdir)
+        site.read_albums(args.indir, args.jobs)
+        site.write(args.outdir, args.jobs)
     except Exception as e:
         logger.critical(f"fatal {type(e).__name__}: {e}")
         exit(1)

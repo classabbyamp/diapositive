@@ -3,6 +3,7 @@ import logging
 import re
 import shutil
 import sys
+from concurrent.futures import ALL_COMPLETED, ThreadPoolExecutor, wait
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from importlib.resources import as_file, files
@@ -25,6 +26,16 @@ else:
 
 FILM_RE = re.compile(r"film ?stock: ?(.*)$", flags=re.IGNORECASE|re.MULTILINE)
 logger = logging.getLogger(__name__)
+
+
+class PhotoException(Exception):
+    def __init__(self, photo: str, variant: str | None, msg: str) -> None:
+        self.photo = photo
+        self.variant = variant
+        self.msg = msg
+
+    def __str__(self) -> str:
+        return f"[{self.photo}] [{self.variant}] {self.msg}"
 
 
 @dataclass
@@ -168,27 +179,34 @@ class Photo:
         )
 
     def write_image(self, max_size: int, outdir: Path, variant: str | None = None, copyright: Copyright | None = None):
-        sfx = "png"
-        if variant is not None:
-            logger.debug(f"writing {variant} image for photo {self.id}")
-            sfx = f"{variant}.{sfx}"
-        else:
-            logger.debug(f"writing image for photo {self.id}")
+        try:
+            sfx = "png"
+            if variant is not None:
+                logger.debug(f"writing {variant} image for photo {self.id}")
+                sfx = f"{variant}.{sfx}"
+            else:
+                logger.debug(f"writing image for photo {self.id}")
 
-        photo_path = outdir / f"photo/{self.id}.{sfx}"
-        if photo_path.exists():
-            return
+            photo_path = outdir / f"photo/{self.id}.{sfx}"
+            if photo_path.exists():
+                return
 
-        im = self.data.copy()
-        im.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
+            im = self.data.copy()
+            im.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
 
-        exif = Image.Exif()
-        if copyright is not None:
-            exif[tags.Base.Copyright] = f"{copyright.artist}, {copyright.licence}"
-        if self.metadata.desc is not None:
-            exif[tags.Base.ImageDescription] = self.metadata.desc
+            exif = Image.Exif()
+            if copyright is not None:
+                exif[tags.Base.Copyright] = f"{copyright.artist}, {copyright.licence}"
+            if self.metadata.desc is not None:
+                exif[tags.Base.ImageDescription] = self.metadata.desc
 
-        im.save(photo_path, optimize=True, exif=exif)
+            im.save(photo_path, optimize=True, exif=exif)
+        except Exception as e:
+            raise PhotoException(photo=self.id, variant=variant, msg=str(e))
+
+    def write_variants(self, variants: list[tuple[str | None, int]], **kwargs):
+        for variant, size in variants:
+            self.write_image(variant=variant, max_size=size, **kwargs)
 
     def write(self, index: int, album: Album, outdir: Path, tmpl: Template):
         photo_path = outdir / "album" / album.id / str(index) / "index.html"
@@ -306,15 +324,28 @@ class Site:
             albums=DLList(),
         )
 
-    def read_albums(self, path: Path):
+    def read_albums(self, path: Path, jobs: int):
         albums = []
-        for itm in path.glob("*"):
-            if itm.is_dir() and not itm.name == "_site":
-                albums.append(Album.from_path(itm))
+        with ThreadPoolExecutor(max_workers=jobs) as exec:
+            futures = []
+            for itm in path.glob("*"):
+                if itm.is_dir() and not itm.name == "_site":
+                    futures.append(exec.submit(Album.from_path, itm))
+            wait(futures, return_when=ALL_COMPLETED)
+            err = False
+            for f in futures:
+                try:
+                    albums.append(f.result())
+                except Exception as e:
+                    logger.error(e)
+                    err = True
+            if err:
+                exit(1)
+
         albums = sorted(albums, key=self.sort.sort, reverse=self.sort.reversed())
         self.albums = DLList(albums)
 
-    def write(self, outdir: Path):
+    def write(self, outdir: Path, jobs: int):
         if outdir.exists():
             shutil.rmtree(outdir)
         outdir.mkdir(parents=True)
@@ -345,10 +376,20 @@ class Site:
             logger.info("generating ATOM feed")
             env.get_template("feed.xml").stream().dump(str(outdir / "feed.xml"))
 
-        for album in self.albums:
-            album.write(outdir, env.get_template("album.html"))
+        with ThreadPoolExecutor(max_workers=jobs) as exec:
+            futures = []
+            for album in self.albums:
+                album.write(outdir, env.get_template("album.html"))
 
-            for idx, photo in enumerate(album.photos, start=1):
-                photo.write(idx, album, outdir, env.get_template("photo.html"))
-                photo.write_image(self.thumb_size, outdir, variant="thm", copyright=self.copyright)
-                photo.write_image(self.image_size, outdir, copyright=self.copyright)
+                for idx, photo in enumerate(album.photos, start=1):
+                    photo.write(idx, album, outdir, env.get_template("photo.html"))
+                    futures.append(exec.submit(Photo.write_variants, photo, variants=[("thm", self.thumb_size), (None, self.image_size)], outdir=outdir, copyright=self.copyright))
+            logger.info("processing images")
+            wait(futures, return_when=ALL_COMPLETED)
+            err = False
+            for f in futures:
+                if (e := f.exception()) is not None:
+                    logger.error(e)
+                    err = True
+            if err:
+                exit(1)
