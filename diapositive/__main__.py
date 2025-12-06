@@ -2,7 +2,7 @@ import argparse
 import logging
 from pathlib import Path
 
-from . import NAME, VERSION
+from . import NAME
 from .models import Site
 
 
@@ -31,9 +31,6 @@ def main():
         "-d", "--debug", action="store_true",
         help="show very verbose output",
     )
-    parser.add_argument(
-        "-V", "--version", action="version", version=f"{NAME} {VERSION}",
-    )
     args = parser.parse_args()
 
     logging.basicConfig(format="%(levelname)s: %(message)s",
@@ -43,7 +40,7 @@ def main():
     logging.captureWarnings(True)
     logger = logging.getLogger(__name__)
 
-    print(f"{NAME} {VERSION}")
+    print(NAME)
 
     cfg = args.config or (args.indir / "diapositive.hcl")
     logger.info(f"using config file: {cfg}")
