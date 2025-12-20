@@ -1,6 +1,6 @@
 import re
 from collections.abc import Iterator, MutableSequence, Sequence
-from typing import Any, Self, TypeVar
+from typing import Any, TypeVar
 
 
 SLUGIFY_RE = re.compile(r"[^a-zA-Z0-9]+")
@@ -19,8 +19,8 @@ def slugify(s: str) -> str:
 
 class Node:
     def __post_init__(self) -> None:
-        self.prev: Self | None = None
-        self.next: Self | None = None
+        self.prev: Node | None = None
+        self.next: Node | None = None
 
 
 N = TypeVar("N", bound=Node)
